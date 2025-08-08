@@ -59,13 +59,42 @@ Construir una aplicación web de gestión de órdenes para restaurantes que sea 
 *   **Base de Datos:** [PostgreSQL](https://www.postgresql.org/) - Base de datos relacional robusta y de código abierto.
 *   **ORM/Cliente DB:** [Supabase Client Library](https://supabase.com/docs/reference/javascript/initializing) - Para interactuar con la base de datos y la autenticación de Supabase.
 *   **Autenticación:** [Supabase Auth](https://supabase.com/docs/guides/auth) - Sistema de autenticación integrado con JWT.
-*   **Notificaciones Push:** [web-push](https://www.npmjs.com/package/web-push) - Librería para enviar notificaciones push a los navegadores.
+*   **Notificaciones Push:** Este proyecto utiliza [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) para el envío de notificaciones push en tiempo real. La comunicación se realiza mediante una API REST que permite registrar tokens de dispositivos y enviar notificaciones a los navegadores compatibles.
 *   **Manejo de JWT:** [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) - Para la creación y verificación de tokens JWT.
 
 ### ☁ Infraestructura y Servicios
 *   **Base de Datos & Autenticación:** [Supabase](https://supabase.com/) - Backend-as-a-Service que proporciona PostgreSQL, autenticación, Realtime y más.
 *   **Despliegue:** [Vercel](https://vercel.com/) - Plataforma para el despliegue rápido y escalable de aplicaciones Next.js.
 *   **Contenerización:** [Docker](https://www.docker.com/) y [Docker Compose](https://docs.docker.com/compose/) - Para la creación de entornos de desarrollo y producción consistentes y portátiles.
+
+### 📲 Flujo de Notificaciones Push
+
+1. El cliente solicita permiso al navegador para recibir notificaciones.
+2. Se genera una suscripción Web Push con `PushManager.subscribe()`, incluyendo las claves VAPID.
+3. El cliente envía esta suscripción al backend mediante una solicitud `POST` al endpoint `/subscribe-push`.
+4. El backend valida y almacena los datos de la suscripción (`endpoint`, `p256dh`, `auth`).
+5. Para enviar notificaciones, el servidor recupera la suscripción desde la base de datos y la usa para disparar una notificación al navegador usando `web-push` o FCM.
+
+
+
+### 📬 Endpoint: `/subscribe-push`
+
+**Método:** `POST`  
+**Descripción:** Suscribir un cliente para recibir notificaciones push.  
+**Content-Type:** `application/json`
+
+#### 🔸 Cuerpo de la solicitud
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/example123",
+  "keys": {
+    "p256dh": "BPc_xyz123...",
+    "auth": "abc987..."
+  }
+}
+```
+
 
 ## 🗂️ Estructura del Proyecto
 
