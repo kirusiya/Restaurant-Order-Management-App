@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # Application Service (Next.js Frontend/Backend Hybrid)
+  app:
+    build:
+      context: . # Build context is the current directory
+      dockerfile: Dockerfile # Use the Dockerfile in the current directory
+    ports:
+      - "3000:3000" # Map host port 3000 to container port 3000
+    environment:
+      # Environment variables for the Next.js application
+      # These should match your .env.local or Vercel environment variables
+      # For local development, you might point to your local PostgreSQL or a Supabase project
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT}
+    depends_on:
+      - db # Ensure the database service starts before the app
+    # Mount the current directory into the container for live reloading during development
+    # This is typically commented out for production builds or when using a multi-stage Dockerfile
+    # volumes:
+    #   - .:/app
+    #   - /app/node_modules # Exclude node_modules from host mount to prevent issues
+
+  # Database Service (PostgreSQL)
+  db:
+    image: postgres:15-alpine # Use a specific version of PostgreSQL Alpine for a smaller image
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432
+    environment:
+      # Database credentials for the PostgreSQL container
+      POSTGRES_DB: ${POSTGRES_DB:-restaurant_db} # Default to 'restaurant_db' if not set
+      POSTGRES_USER: ${POSTGRES_USER:-admin}     # Default to 'admin' if not set
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password} # Default to 'password' if not set
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persistent volume for database data
+      # Mount the init_db.sql script to be executed on first startup
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data: # Define the named volume for database persistence
