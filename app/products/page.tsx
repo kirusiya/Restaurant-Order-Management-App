@@ -210,22 +210,32 @@ export default function ProductsPage() {
           variant: 'destructive',
           icon: <XCircle className="h-5 w-5" />,
         });
-      } else {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (jsonError) {
-          errorData = { error: `Failed to delete product. Status: ${response.status} ${response.statusText}` };
+      } else if (response.status === 409) {
+            const errorData = await response.json();
+            console.error('Delete Product API Error (Conflict):', errorData.error);
+            toast({
+                title: 'Error al eliminar producto',
+                description: errorData.error,
+                variant: 'destructive',
+                icon: <XCircle className="h-5 w-5" />,
+            });
+            setIsDeleteConfirmOpen(false); // Cerrar el diálogo de confirmación
+        } else {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (jsonError) {
+                errorData = { error: `Failed to delete product. Status: ${response.status} ${response.statusText}` };
+            }
+            console.error('Delete Product API Error:', errorData.error || 'Unknown error during delete');
+            toast({
+                title: 'Error al eliminar producto',
+                description: errorData.error || 'Hubo un problema al eliminar el producto.',
+                variant: 'destructive',
+                icon: <XCircle className="h-5 w-5" />,
+            });
+            throw new Error(errorData.error || 'Failed to delete product');
         }
-        console.error('Delete Product API Error:', errorData.error || 'Unknown error during delete');
-        toast({
-          title: 'Error al eliminar producto',
-          description: errorData.error || 'Hubo un problema al eliminar el producto.',
-          variant: 'destructive',
-          icon: <XCircle className="h-5 w-5" />,
-        });
-        throw new Error(errorData.error || 'Failed to delete product');
-      }
     } catch (err: any) {
       console.error('Error deleting product in component:', err);
       setError(`Error al eliminar producto: ${err.message}`);
